@@ -38,7 +38,7 @@ define upstart::job (
   $restart        = undef) {
   validate_re($ensure, '^(present|absent)$', 'ensure must be "present" or "absent".')
 
-  validate_re($service_ensure, '^(running|true|stopped|false)$', 'service_ensure must be "running" or "stopped".')
+  validate_re($service_ensure, '^(running|true|stopped|false|any)$', 'service_ensure must be "running", "stopped" or "any".')
 
   validate_re($console, '^(log|none|output)$', 'console must be "log", "none", or "output".')
 
@@ -80,14 +80,15 @@ define upstart::job (
   # first run. Hopefully, we can come up with something better,
   # but this works well enough for now.
   if $ensure == 'present' {
-    service { $name:
-      ensure    => $service_ensure,
-      enable    => $service_enable,
-      provider  => 'upstart',
-      require   => File[$config_path],
-      subscribe => File[$config_path],
+    if $service_ensure != 'any' {
+      service { $name:
+        ensure    => $service_ensure,
+        enable    => $service_enable,
+        provider  => 'upstart',
+        require   => File[$config_path],
+        subscribe => File[$config_path],
+      }
     }
-
     if !empty($restart) {
       Service[$name] {
         restart => $restart, }
